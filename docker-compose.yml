@@ -1,0 +1,7 @@
+services:
+  app:
+    image: spark-demo01:v1.2
+    ports:
+      - "80:80"
+    volumes:
+      - ./data/:/data/:r

@@ -15,7 +15,7 @@ def index():
         .format("csv") \
         .option("header", "true") \
         .option("inferSchema", "true") \
-        .load('data/annual-enterprise-survey-2021-financial-year-provisional-csv.csv')
+        .load('/data/annual-enterprise-survey-2021-financial-year-provisional-csv.csv')
 
     data_itr = df.collect()
     result_list = []
