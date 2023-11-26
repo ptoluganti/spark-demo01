@@ -1,0 +1,75 @@
+{{- if not .Values.multiple_instance }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: namescreening
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: namescreening
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: namescreening
+  template:
+    metadata:
+      labels:
+        app: namescreening
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - namescreening
+      containers:
+        - name: namescreening
+          image: {{ .Values.image.name }}:{{ .Values.image.tag }}
+          ports:
+            - containerPort: 8888
+              protocol: TCP
+          env:
+            - name: LEGAL_URL
+              value: http://namematching.{{ .Release.Namespace }}.svc.cluster.local:5000/api/v1.0/matchLP
+            - name: LOGGING_LEVEL_COM_IMTF_NAMEMATCHING
+              value: info
+            - name: NATURAL_FULL_URL
+              value: http://namematching.{{ .Release.Namespace }}.svc.cluster.local:5000/api/v1.0/matchNP
+            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+              value: {{ .Values.appconf.applicationInsights }}
+            - name: APPLICATIONINSIGHTS_ROLE_NAME
+              value: namescreening
+          resources:
+            requests:
+              memory: " {{ .Values.appconf.memInGb }}Gi"
+              ephemeral-storage: 3Gi
+            limits:
+              memory: " {{ .Values.appconf.memInGb }}Gi"
+              ephemeral-storage: 3Gi
+          volumeMounts:
+            - name: namescreening
+              mountPath: /opt/namescreening/indexes/
+          imagePullPolicy: IfNotPresent
+      priorityClassName: system-node-critical
+      securityContext:
+        fsGroup: 1000
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+  volumeClaimTemplates:
+    - kind: PersistentVolumeClaim
+      apiVersion: v1
+      metadata:
+        name: namescreening
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 128Gi
+        storageClassName: managed-csi-premium
+        volumeMode: Filesystem
+  serviceName: namescreening
+{{- end }}
